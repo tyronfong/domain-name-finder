@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>单词贡献</title>
+</head>
+<script>
+    function validateForm() {
+        var x = document.forms["wordForm"]["word"].value;
+        if (x.length > 5) {
+            alert("Word length must be less than 6.");
+            return false;
+        }
+    }
+</script>
+<body>
+<h1>输入：</h1>
+{% if response %}<p><strong>{{ response }}</strong></p>{% endif %}
+<form name="wordForm" method = 'post' action="/polls/upload/" onsubmit="return validateForm()" enctype="multipart/form-data">
+    {% csrf_token %}
+    <!--{{uf.as_p}}-->
+    <input type="text" name="word" autofocus/>
+<input type="submit" value = "ok" />
+</form>
+<br>
+</body>
+</html>

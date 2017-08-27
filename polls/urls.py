@@ -9,4 +9,7 @@ urlpatterns = [
     url(r'^(?P<pk>[0-9]+)/results/$', views.ResultsView.as_view(), name='results'),
     url(r'^(?P<question_id>[0-9]+)/vote/$', views.vote, name='vote'),
     url(r'^submit/$', views.submit, name='submit'),
+    url(r'^login/$', views.LoginView.as_view(), name='login'),
+    url(r'^check/$', views.check, name='check'),
+    url(r'^upload/$', views.word_upload, name='upload'),
 ]

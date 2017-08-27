@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>登陆</title>
+</head>
+<script>
+    function validateForm() {
+        var username = document.forms["loginForm"]["username"].value;
+        var password = document.forms["loginForm"]["password"].value;
+        if (username == "" || password == "") {
+            alert("username or password can not be empty.");
+            return false;
+        }
+    }
+</script>
+<body>
+<h1>登陆页面：</h1>
+{% if error_msg %}<p><strong>{{ error_msg }}</strong></p>{% endif %}
+<form name="loginForm" method = 'post' action="/polls/check/" onsubmit="return validateForm()" enctype="multipart/form-data">
+    {% csrf_token %}
+    <!--{{uf.as_p}}-->
+    <input type="text" name="username"/>
+    <input type="password" name="password"/>
+<input type="submit" value = "ok" />
+</form>
+<br>
+</body>
+</html>

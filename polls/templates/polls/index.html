@@ -1,9 +1,14 @@
-<h1>Please login first.</h1>
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title></title>
+</head>
 
-{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
-
-<form action="/submit" method="post">
-    <input type="test" name="word" id="choice{{ forloop.counter }}" value="Word:"/>
-
-    <input type="submit" value="Submit"/>
-</form>
+<body>
+<h1>welcome {{username}} !</h1>
+<br>
+<a href="http://127.0.0.1:8000/online/logout/">退出</a>
+</body>
+</html>

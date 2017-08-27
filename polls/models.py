@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import datetime
 from django.db import models
 from django.utils import timezone
+from django.contrib import admin
 
 # Create your models here.
 
@@ -32,3 +33,18 @@ class Word(models.Model):
 
     def __str__(self):
         return self.word
+
+
+class Domain(models.Model):
+    name = models.CharField(max_length=12, unique=True)
+    is_checked = models.BooleanField(default=False)
+    is_available = models.BooleanField(default=False)
+
+    def __str__(self):
+        if not self.is_checked:
+            return self.name + ' is not checked yet.'
+        elif self.is_available:
+            return self.name + ' is available to register.'
+        else:
+            return self.name + ' is NOT available to register.'
+
