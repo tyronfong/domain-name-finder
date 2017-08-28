@@ -1,11 +1,11 @@
 from django.shortcuts import get_object_or_404, render
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
 from django.views import generic
 from django.contrib.auth import authenticate, login
 from django.db import IntegrityError
 from .models import Word, Domain, Question, Choice
-import logging
+import logging, csv
 import socket, thread
 from django.db.models import Q
 logging.basicConfig()
@@ -67,11 +67,11 @@ words_cache = WordCache()
 def word_upload(request):
     if request.user.is_authenticated():
         try:
-            word = Word(word=request.POST['word'])
+            word = Word(word=request.POST['word'].lower())
             word.save()
             #  if word save successfully, then it's a new word, can be used to calculate new domain list.
             try:
-                thread.start_new_thread(__domain_calculate, (request.POST['word'],))
+                thread.start_new_thread(__domain_calculate, (word.word,))
             except Exception, e:
                 logger.error("Error: unable to start thread", str(e))
 
@@ -105,6 +105,19 @@ def vote(request, question_id):
         # with POST data. This prevents data from being posted twice if a
         # user hits the Back button.
         return HttpResponseRedirect(reverse('polls:results', args=(question.id,)))
+
+
+def export_view(request):
+    # Create the HttpResponse object with the appropriate CSV header.
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="all_domain_names.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['domain', 'isChecked', 'isAvailable'])
+    for domain in Domain.objects.all():
+        writer.writerow([domain.name, domain.is_checked, domain.is_available])
+
+    return response
 
 
 def __get_client_ip(request):

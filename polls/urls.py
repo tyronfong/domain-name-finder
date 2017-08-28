@@ -12,4 +12,5 @@ urlpatterns = [
     url(r'^login/$', views.LoginView.as_view(), name='login'),
     url(r'^check/$', views.check, name='check'),
     url(r'^upload/$', views.word_upload, name='upload'),
+    url(r'^export/$', views.export_view, name='export'),
 ]
