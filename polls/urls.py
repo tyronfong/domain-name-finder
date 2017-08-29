@@ -13,4 +13,5 @@ urlpatterns = [
     url(r'^check/$', views.check, name='check'),
     url(r'^upload/$', views.word_upload, name='upload'),
     url(r'^export/$', views.export_view, name='export'),
+    url(r'^redo/$', views.redo, name='redo'),
 ]

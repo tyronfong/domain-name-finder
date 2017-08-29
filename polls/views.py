@@ -6,7 +6,7 @@ from django.contrib.auth import authenticate, login
 from django.db import IntegrityError
 from .models import Word, Domain, Question, Choice
 import logging, csv
-import socket, thread
+import thread, threading, whois
 from django.db.models import Q
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -40,6 +40,18 @@ class DetailView(generic.DetailView):
 class ResultsView(generic.DetailView):
     model = Question
     template_name = 'polls/results.html'
+
+
+def redo(request):
+    if request.user.is_authenticated():
+        for domain in Domain.objects.filter(Q(is_checked=True) & Q(is_available=True)):
+            try:
+                thread.start_new_thread(__domain_re_calculate, (domain,))
+            except Exception, e:
+                logger.error("Error: unable to start thread", str(e))
+        return HttpResponse("Redo triggered.")
+    else:
+        return HttpResponse("Pls login first.")
 
 
 def submit(requst, word):
@@ -130,6 +142,8 @@ def __get_client_ip(request):
 
 
 def __domain_calculate(word):
+    new_domain_single = Domain(name=word)
+    new_domain_single.save()
     for a_word in words_cache.cache:
         new_domain = Domain(name=a_word.word+word)
         new_domain_invert = Domain(name=word+a_word.word)
@@ -141,6 +155,19 @@ def __domain_calculate(word):
     pass
 
 
+def __domain_re_calculate(domain):
+    try:
+        logger.info('redoing domain: ' + domain.name + '.com')
+        whois.whois(domain.name + ".com")
+        domain.is_available = False
+        lock = threading.Lock()
+        lock.acquire()
+        domain.save()
+        lock.release()
+    except whois.parser.PywhoisError:
+        pass
+
+
 def __get_all_new_domains(word):
     return Domain.objects.filter(Q(name__startswith=word)|Q(name__endswith=word))
 
@@ -148,11 +175,11 @@ def __get_all_new_domains(word):
 def __query_ip_for_those_domains(domains):
     for domain in domains:
         try:
-            socket.gethostbyname(domain.name+".com")
+            whois.whois(domain.name+".com")
             domain.is_checked = True
             domain.is_available = False
             domain.save()
-        except socket.gaierror:
+        except whois.parser.PywhoisError:
             domain.is_checked = True
             domain.is_available = True
             domain.save()
