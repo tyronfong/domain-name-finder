@@ -161,18 +161,7 @@ def __domain_calculate(word):
 
 
 def __domain_re_calculate(domains):
-    pool.map(__single_calculate, domains)
-
-
-def __single_calculate(domain):
-    logger.info('redoing domain: ' + domain.name + '.com')
-    try:
-        whois.whois(domain.name + ".com")
-        domain.is_available = False
-        domain.save()
-    except whois.parser.PywhoisError:
-        domain.save()
-        logger.info(domain.name + '.com' + ' is available.')
+    pool.map(__query_whois_for_single_domain, domains)
 
 
 def __get_all_new_domains(word):
@@ -190,3 +179,4 @@ def __query_whois_for_single_domain(domain):
         domain.is_checked = True
         domain.is_available = True
         domain.save()
+        logger.info(domain.name + '.com' + ' is available.')
