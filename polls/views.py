@@ -10,6 +10,7 @@ import thread, whois
 from django.db.models import Q
 from multiprocessing.pool import ThreadPool
 from socket import error as SocketError
+from functools import partial
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -156,13 +157,13 @@ def __domain_calculate(word):
         new_domain.save()
         new_domain_invert.save()
 
-    pool.map(__query_whois_for_single_domain, __get_all_new_domains(word))
+    pool.map(partial(__query_whois_for_single_domain, count=0), __get_all_new_domains(word))
     words_cache.cache.append(Word(word=word))
     pass
 
 
 def __domain_re_calculate(domains):
-    pool.map(__query_whois_for_single_domain, domains)
+    pool.map(partial(__query_whois_for_single_domain, count=0), domains)
 
 
 def __get_all_new_domains(word):
