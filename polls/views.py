@@ -49,8 +49,7 @@ class ResultsView(generic.DetailView):
 def redo(request):
     if request.user.is_authenticated():
         try:
-            thread.start_new_thread(__domain_re_calculate,
-                                    (Domain.objects.filter(Q(is_checked=True) & Q(is_available=True) | Q(is_checked=False)),))
+            __domain_re_calculate(Domain.objects.filter(Q(is_checked=True) & Q(is_available=True) | Q(is_checked=False)))
         except Exception, e:
             logger.error("Error: unable to start thread", str(e))
         return HttpResponse("Redo triggered.")
@@ -88,7 +87,7 @@ def word_upload(request):
             word.save()
             #  if word save successfully, then it's a new word, can be used to calculate new domain list.
             try:
-                thread.start_new_thread(__domain_calculate, (word.word,))
+                __domain_calculate(word.word)
             except Exception, e:
                 logger.error("Error: unable to start thread", str(e))
 
