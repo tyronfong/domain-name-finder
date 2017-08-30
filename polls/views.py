@@ -50,7 +50,7 @@ def redo(request):
     if request.user.is_authenticated():
         try:
             thread.start_new_thread(__domain_re_calculate,
-                                    (Domain.objects.filter(Q(is_checked=True) & Q(is_available=True)),))
+                                    (Domain.objects.filter(Q(is_checked=True) & Q(is_available=True) | Q(is_checked=False)),))
         except Exception, e:
             logger.error("Error: unable to start thread", str(e))
         return HttpResponse("Redo triggered.")
