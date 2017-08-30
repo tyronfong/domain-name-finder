@@ -6,10 +6,14 @@ from django.contrib.auth import authenticate, login
 from django.db import IntegrityError
 from .models import Word, Domain, Question, Choice
 import logging, csv
-import thread, threading, whois
+import thread, whois
 from django.db.models import Q
+from multiprocessing.pool import ThreadPool
+
 logging.basicConfig()
 logger = logging.getLogger(__name__)
+
+pool = ThreadPool(1000)
 
 
 class WordCache:
@@ -44,11 +48,11 @@ class ResultsView(generic.DetailView):
 
 def redo(request):
     if request.user.is_authenticated():
-        for domain in Domain.objects.filter(Q(is_checked=True) & Q(is_available=True)):
-            try:
-                thread.start_new_thread(__domain_re_calculate, (domain,))
-            except Exception, e:
-                logger.error("Error: unable to start thread", str(e))
+        try:
+            thread.start_new_thread(__domain_re_calculate,
+                                    (Domain.objects.filter(Q(is_checked=True) & Q(is_available=True)),))
+        except Exception, e:
+            logger.error("Error: unable to start thread", str(e))
         return HttpResponse("Redo triggered.")
     else:
         return HttpResponse("Pls login first.")
@@ -72,6 +76,7 @@ def check(request):
         return render(request, 'polls/login.html', {
             'error_msg': "username or password is incorrect."
         })
+
 
 words_cache = WordCache()
 
@@ -145,41 +150,43 @@ def __domain_calculate(word):
     new_domain_single = Domain(name=word)
     new_domain_single.save()
     for a_word in words_cache.cache:
-        new_domain = Domain(name=a_word.word+word)
-        new_domain_invert = Domain(name=word+a_word.word)
+        new_domain = Domain(name=a_word.word + word)
+        new_domain_invert = Domain(name=word + a_word.word)
         new_domain.save()
         new_domain_invert.save()
 
-    __query_ip_for_those_domains(__get_all_new_domains(word))
+    pool.map(__query_whois_for_single_domain, __get_all_new_domains(word))
     words_cache.cache.append(Word(word=word))
     pass
 
 
-def __domain_re_calculate(domain):
+def __domain_re_calculate(domains):
+    pool.map(__single_calculate, domains)
+
+
+def __single_calculate(domain):
+    logger.info('redoing domain: ' + domain.name + '.com')
     try:
-        logger.info('redoing domain: ' + domain.name + '.com')
         whois.whois(domain.name + ".com")
         domain.is_available = False
-        lock = threading.Lock()
-        lock.acquire()
         domain.save()
-        lock.release()
     except whois.parser.PywhoisError:
-        pass
+        domain.save()
+        logger.info(domain.name + '.com' + ' is available.')
 
 
 def __get_all_new_domains(word):
-    return Domain.objects.filter(Q(name__startswith=word)|Q(name__endswith=word))
+    return Domain.objects.filter(Q(name__startswith=word) | Q(name__endswith=word))
 
 
-def __query_ip_for_those_domains(domains):
-    for domain in domains:
-        try:
-            whois.whois(domain.name+".com")
-            domain.is_checked = True
-            domain.is_available = False
-            domain.save()
-        except whois.parser.PywhoisError:
-            domain.is_checked = True
-            domain.is_available = True
-            domain.save()
+def __query_whois_for_single_domain(domain):
+    try:
+        logger.info('querying whois for domain: ' + domain.name)
+        whois.whois(domain.name + ".com")
+        domain.is_checked = True
+        domain.is_available = False
+        domain.save()
+    except whois.parser.PywhoisError:
+        domain.is_checked = True
+        domain.is_available = True
+        domain.save()
