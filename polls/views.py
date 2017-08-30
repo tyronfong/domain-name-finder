@@ -174,6 +174,7 @@ def __get_all_new_domains(word):
 def __query_whois_for_single_domain(domain, count):
     try:
         logger.info('querying whois for domain: ' + domain.name)
+        logger.info('count: ' + count)
         whois.whois(domain.name + ".com")
         domain.is_checked = True
         domain.is_available = False
