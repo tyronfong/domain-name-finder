@@ -36,7 +36,7 @@ class Word(models.Model):
 
 
 class Domain(models.Model):
-    name = models.CharField(max_length=12, unique=True)
+    name = models.CharField(max_length=12)
     is_checked = models.BooleanField(default=False)
     is_available = models.BooleanField(default=False)
 
