@@ -157,7 +157,8 @@ def __domain_calculate(word):
         new_domain.save()
         new_domain_invert.save()
 
-    pool.map(partial(__query_whois_for_single_domain, count=0), __get_all_new_domains(word))
+    new_domains = __get_all_new_domains(word)
+    pool.map(partial(__query_whois_for_single_domain, count=0), new_domains)
     words_cache.cache.append(Word(word=word))
     pass
 
