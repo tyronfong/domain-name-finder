@@ -9,6 +9,7 @@ import logging, csv
 import thread, whois
 from django.db.models import Q
 from multiprocessing.pool import ThreadPool
+from socket import error as SocketError
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -49,9 +50,10 @@ class ResultsView(generic.DetailView):
 def redo(request):
     if request.user.is_authenticated():
         try:
-            __domain_re_calculate(Domain.objects.filter(Q(is_checked=True) & Q(is_available=True) | Q(is_checked=False)))
+            thread.start_new_thread(__domain_re_calculate,
+                                    (Domain.objects.filter(Q(is_checked=True) & Q(is_available=True) | Q(is_checked=False)),))
         except Exception, e:
-            logger.error("Error: unable to start thread", str(e))
+            logger.error("Error: unable to start thread" + str(e))
         return HttpResponse("Redo triggered.")
     else:
         return HttpResponse("Pls login first.")
@@ -87,9 +89,9 @@ def word_upload(request):
             word.save()
             #  if word save successfully, then it's a new word, can be used to calculate new domain list.
             try:
-                __domain_calculate(word.word)
+                thread.start_new_thread(__domain_calculate, (word.word,))
             except Exception, e:
-                logger.error("Error: unable to start thread", str(e))
+                logger.error("Error: unable to start thread" + str(e))
 
         except IntegrityError:
             return render(request, 'polls/wordUpload.html', {
@@ -167,7 +169,7 @@ def __get_all_new_domains(word):
     return Domain.objects.filter(Q(name__startswith=word) | Q(name__endswith=word))
 
 
-def __query_whois_for_single_domain(domain):
+def __query_whois_for_single_domain(domain, count):
     try:
         logger.info('querying whois for domain: ' + domain.name)
         whois.whois(domain.name + ".com")
@@ -179,3 +181,10 @@ def __query_whois_for_single_domain(domain):
         domain.is_available = True
         domain.save()
         logger.info(domain.name + '.com' + ' is available.')
+    except SocketError as e:
+        if count < 5:
+            logger.info('retry: ' + count + ' querying whois for domain: ' + domain.name)
+            __query_whois_for_single_domain(domain, count+1)
+        else:
+            logger.error('fail to query domain after 5 times retry' + str(e))
+
