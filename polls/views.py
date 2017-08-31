@@ -132,9 +132,16 @@ def export_view(request):
     response['Content-Disposition'] = 'attachment; filename="all_domain_names.csv"'
 
     writer = csv.writer(response)
-    writer.writerow(['domain', 'isChecked', 'isAvailable'])
-    for domain in Domain.objects.all():
-        writer.writerow([domain.name, domain.is_checked, domain.is_available])
+    # writer.writerow(['domain', 'isChecked', 'isAvailable'])
+
+    count = 0
+    list=['', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+    for domain in Domain.objects.filter(Q(is_checked=True) & Q(is_available=True)):
+        list[count] = domain.name
+        count += 1
+        if count > 14:
+            writer.writerow(list)
+            count = 0
 
     return response
 
