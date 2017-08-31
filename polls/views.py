@@ -15,7 +15,7 @@ from functools import partial
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 
-pool = ThreadPool(1000)
+pool = ThreadPool(100)
 
 
 class WordCache:
@@ -174,7 +174,7 @@ def __get_all_new_domains(word):
 def __query_whois_for_single_domain(domain, count):
     try:
         logger.info('querying whois for domain: ' + domain.name)
-        logger.info('count: ' + count)
+        logger.info('count: ' + str(count))
         whois.whois(domain.name + ".com")
         domain.is_checked = True
         domain.is_available = False
